@@ -127,13 +127,19 @@ void request_serve_static(int fd, char *filename, int filesize) {
     close_or_die(srcfd);
     
     // put together response
-    sprintf(buf, ""
+    int len = snprintf(buf, MAXBUF, ""
 	    "HTTP/1.0 200 OK\r\n"
 	    "Server: OSTEP WebServer\r\n"
 	    "Content-Length: %d\r\n"
 	    "Content-Type: %s\r\n\r\n", 
 	    filesize, filetype);
     
+    if (len >= MAXBUF) {
+        fprintf(stderr, "Error: response headers truncated due to exceeding max buffer size");
+        // or 
+        // request_error(fd, filename, "500", "Internal Server Error", "Headers too large");
+        // return;
+    }
     write_or_die(fd, buf, strlen(buf));
     
     //  Writes out to the client socket the memory-mapped file 
@@ -159,7 +165,7 @@ void request_handle(int fd) {
     request_read_headers(fd);
     
     is_static = request_parse_uri(uri, filename, cgiargs);
-    printf("FileName: %s", filename);
+    
     if (stat(filename, &sbuf) < 0) {
 	request_error(fd, filename, "404", "Not found", "server could not find this file");
 	return;
