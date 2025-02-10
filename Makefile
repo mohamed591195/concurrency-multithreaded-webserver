@@ -10,8 +10,8 @@
 
 #1. the following are the variables (for the compiler, flags, and object files)
 CC = gcc            # Specifies the C compiler to use
-CFLAGS = -Wall      # Compiler flags (-Wall enables all warning messages) could be stands for warning all
-OBJS = wserver.o wclient.o request.o io_helper.o   # List of object files needed
+CFLAGS = -Wall -pthread     # Compiler flags (-Wall enables all warning messages) could be stands for warning all
+OBJS = wserver.o wclient.o request.o io_helper.o tpool.o  # List of object files needed
 
 #2. this line tells make about the file suffixes it should recognize (.c and .o)
 .SUFFIXES: .c .o 
@@ -24,8 +24,8 @@ all: wserver wclient spin.cgi
 
 # wserver: This target depends on wserver.o, request.o, and io_helper.o. 
 # The rule specifies how to build wserver using these object files.
-wserver: wserver.o request.o io_helper.o
-	$(CC) $(CFLAGS) -o wserver wserver.o request.o io_helper.o 
+wserver: wserver.o request.o io_helper.o tpool.o
+	$(CC) $(CFLAGS) -o wserver wserver.o request.o io_helper.o tpool.o
 
 # wclient: This target depends on wclient.o and io_helper.o.
 wclient: wclient.o io_helper.o
