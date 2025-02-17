@@ -37,9 +37,11 @@ int main(int argc, char *argv[]) {
     
     /* Make the response body */
     char content[MAXBUF];
-    sprintf(content, "<p>Welcome to the CGI program (%s)</p>\r\n", buf);
-    sprintf(content, "%s<p>My only purpose is to waste time on the server!</p>\r\n", content);
-    sprintf(content, "%s<p>I spun for %.2f seconds</p>\r\n", content, t2 - t1);
+    snprintf(content, MAXBUF, "<p>Welcome to the CGI program (%s)</p>\r\n", buf);
+    
+    int offset = strlen(content);
+    offset += snprintf(content + offset, MAXBUF - offset, "<p>My only purpose is to waste time on the server!</p>\r\n");
+    snprintf(content + offset, MAXBUF - offset, "<p>I spun for %.2f seconds</p>\r\n", t2 - t1);
     
     /* Generate the HTTP response */
     printf("Content-Length: %lu\r\n", strlen(content));

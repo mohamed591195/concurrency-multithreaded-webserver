@@ -24,8 +24,8 @@ all: wserver wclient spin.cgi
 
 # wserver: This target depends on wserver.o, request.o, and io_helper.o. 
 # The rule specifies how to build wserver using these object files.
-wserver: wserver.o request.o io_helper.o tpool.o
-	$(CC) $(CFLAGS) -o wserver wserver.o request.o io_helper.o tpool.o
+wserver: wserver.o request.o io_helper.o tpool.o linked_list.o heap.o schedulers.o 
+	$(CC) $(CFLAGS) -o wserver wserver.o request.o io_helper.o tpool.o linked_list.o heap.o schedulers.o
 
 # wclient: This target depends on wclient.o and io_helper.o.
 wclient: wclient.o io_helper.o

@@ -3,16 +3,27 @@
 
 #include <stdbool.h>
 #include <stddef.h>
+// #include "schedulers.h"
 
-struct tpool;
-typedef struct tpool tpool_t;
+// to avoid circular dependency from importing schedulers.h
+typedef struct store store_t;
 
 typedef void (*thread_func_t)(void *arg);
 
-tpool_t *tpool_create(size_t num);
-void tpool_destroy(tpool_t *tm);
+// Define tpool_work_t here (not just forward-declare)
+typedef struct tpool_work {
+    int priority; // for scheduling algorithms
+    thread_func_t func;
+    void *arg;
+} tpool_work_t;
+// extern tpool_work_t;
+struct tpool;
+typedef struct tpool tpool_t;
 
-bool tpool_add_work(tpool_t *tm, thread_func_t func, void *arg);
+tpool_t *tpool_create(size_t num, store_t *store);
+void tpool_destroy(tpool_t *tm);
+bool tpool_work_add(tpool_t *tm, thread_func_t func, void *arg, int priority);
 void tpool_wait(tpool_t *tm);
+void tpool_work_destroy(tpool_work_t *work);
 
 #endif /* __TPOOL_H__ */
