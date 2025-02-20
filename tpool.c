@@ -31,7 +31,7 @@ struct tpool {
 };
 
 
-static tpool_work_t *tpool_work_create(thread_func_t func, void *arg, int priority) {
+static tpool_work_t *tpool_work_create(thread_func_t func, void *arg, int priority, char *http_first_line) {
     if (func == NULL) return NULL;
 
     tpool_work_t *work = malloc(sizeof(tpool_work_t));
@@ -44,6 +44,7 @@ static tpool_work_t *tpool_work_create(thread_func_t func, void *arg, int priori
     work->priority = priority;
     work->func = func;
     work->arg = arg;
+    work->http_first_line = http_first_line;
     // work->next = NULL;
 
     return work;
@@ -89,7 +90,7 @@ static void *tpool_worker(void *arg) {
         pthread_mutex_unlock(&(tm->work_lock));
 
         if (work != NULL) {
-            work->func(work->arg);
+            work->func(work->arg, work->http_first_line);
             tpool_work_destroy(work);
         }
 
@@ -192,13 +193,13 @@ void tpool_wait(tpool_t *tm) {
 }
 
 
-bool tpool_work_add(tpool_t *tm, thread_func_t func, void *arg, int priority) {
+bool tpool_work_add(tpool_t *tm, thread_func_t func, void *arg, int priority, char *http_first_line) {
     // we make sure that we'r not trying to add work while destroy_pool is being processed concurrently
     if (tm == NULL || tm->stop) return false;
 
     pthread_mutex_lock(&(tm->work_lock));
 
-    tpool_work_t *work = tpool_work_create(func, arg, priority);
+    tpool_work_t *work = tpool_work_create(func, arg, priority, http_first_line);
 
     if (!work) {
         pthread_mutex_unlock(&(tm->work_lock));

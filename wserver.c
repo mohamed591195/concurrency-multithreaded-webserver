@@ -7,9 +7,10 @@
 #include "linked_list.h"
 #include "schedulers.h"
 
-
+#define MAXBUF (8192)
+    
 static size_t threads_num = 5;
-static char *schedalg;
+char *schedalg;
 
 char default_root[] = ".";
 
@@ -24,6 +25,8 @@ int main(int argc, char *argv[]) {
     char *root_dir = default_root;
     int port = 10000;
 	tpool_t *tm;
+	store_t *store;
+	size_t priority = 0;
 
     while ((c = getopt(argc, argv, "d:p:t:s:")) != -1)
 	switch (c) {
@@ -44,7 +47,6 @@ int main(int argc, char *argv[]) {
 	    exit(1);
 	}
 
-	printf("%s\n", schedalg);
     // run out of this directory
     chdir_or_die(root_dir);
 
@@ -52,9 +54,17 @@ int main(int argc, char *argv[]) {
     int listen_fd = open_listen_fd_or_die(port);
 
 	// creating the store data structure depending on the requested scheduling policy
-	store_t *ll_store = create_store(&linked_list_strategy);
+	if (strcmp(schedalg, "SFF") == 0) {
+		store = create_store(&heap_strategy);
+		printf("we are using heap version\n");
+	}else {
+		// default store uses linked list (i.e FIFO) 
+		store = create_store(&linked_list_strategy);
+		printf("we are using linked list version\n");
+	}
+
 	// creating the pool, passing the store where work can be stored
-	tm = tpool_create(threads_num, ll_store);
+	tm = tpool_create(threads_num, store);
 
 	if (tm == NULL) {
 		fprintf(stderr, "main: tpool_create failure");
@@ -70,7 +80,24 @@ int main(int argc, char *argv[]) {
 			exit(EXIT_FAILURE);
 		}
 		*conn_fd_ptr = accept_or_die(listen_fd, (sockaddr_t *) &client_addr, (socklen_t *) &client_len);
-		tpool_work_add(tm, request_handle, conn_fd_ptr, 0);
+
+		// reading the first line of the request header
+		char http_first_line[MAXBUF];
+		readline_or_die(*conn_fd_ptr, http_first_line, MAXBUF);
+
+		if (strcmp(schedalg, "SFF") == 0) {   
+
+			char *size_param = strstr(http_first_line, "size=");
+			if (size_param) {
+				priority = (size_t) atoi(size_param + 5);
+				// printf("desired_size: %d\n", desired_size);
+			}
+		}
+		
+		// storing it in the work item for later processing
+		if (!tpool_work_add(tm, request_handle, conn_fd_ptr, priority, http_first_line)) {
+			request_error(conn_fd_ptr, "GET", "500", "Queue Full");
+		}
 
 		// old code
 		// request_handle(conn_fd);

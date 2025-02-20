@@ -4,7 +4,7 @@
 #include "heap.h"
 
 
-#define MAX_HEAP_SIZE 100
+#define MAX_HEAP_SIZE 1010
 
 struct heap_node {
     int val;

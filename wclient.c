@@ -2,7 +2,8 @@
 // client.c: A very, very primitive HTTP client.
 // 
 // To run, try: 
-//      client hostname portnumber filename
+//      client hostname portnumber "/filename?arguments"
+//   ex:./wclient localhost 10000 "/spin.cgi?name=ahmed"
 //
 // Sends one HTTP request to the specified HTTP server.
 // Prints out the HTTP response.
